@@ -23,7 +23,7 @@ class Stack:
     def __init__(self, name = "Stack Default"):
         self.data = []
         self.name = name
-    def append(self, value):
+    def push(self, value):
         self.data.append(value)
     def pop(self):
         return self.data.pop()
@@ -45,18 +45,18 @@ def TowerOfHanoi(n: int, source: Stack, destination: Stack, aux: Stack, counter:
     StackList = [source, destination, aux]
     StackList.sort(key=KeyByName)
 
-    destination.append(source.pop())
+    destination.push(source.pop())
     counter.add(1)
     print("Step:", counter.value)
     print("moving Disk", n, "from", source.name, "to", destination.name)
+
     for e in StackList:
         print(e.name, ":", e.data)
     print()
 
+    clock.tick(60)
+
     screen.fill("white")
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
 
     pos = 350
     for i in range(3):
@@ -72,13 +72,13 @@ def TowerOfHanoi(n: int, source: Stack, destination: Stack, aux: Stack, counter:
         diskHeight = height / count
         diskWidth = 400
 
-        yDisk = 800
-        xDisk = x - diskHeight
+        yDisk = 800 - diskHeight
+        xDisk = x
 
         color = ["red", "green", "blue"]
 
         for e in StackList[i].data:
-            scaled = e / count * diskWidth
+            scaled = e / count * diskWidth + 40
             diskRect = pygame.Rect(pygame.Rect(xDisk, yDisk, scaled, diskHeight))
             diskRect.center = rodRect.center
             diskRect.y = yDisk
@@ -87,14 +87,23 @@ def TowerOfHanoi(n: int, source: Stack, destination: Stack, aux: Stack, counter:
         pos += 400
     pygame.display.flip()
     timeCount = 0
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_ESCAPE]:
+        pygame.quit()
+        sys.exit()
+
     while timeCount < 0.3:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
         timeCount += clock.tick(60) / 1000
-        keys = pygame.key.get_pressed()
+
         if keys[pygame.K_SPACE]:
             timeCount = 2
         if keys[pygame.K_ESCAPE]:
             pygame.quit()
-            sys.exit()
     # input()
     TowerOfHanoi(n-1, aux, destination, source, counter)
 
@@ -102,14 +111,13 @@ A = Stack("A")
 B = Stack("B")
 C = Stack("C")
 
-for i in range(20, 0, -1):
-    A.append(i)
+for i in range(10, 0, -1):
+    A.push(i)
 
 print("Initial Condition")
 print("A :", A.data)
 print("B :", B.data)
 print("C :", C.data, "\n")
-TowerOfHanoi(20, A, C, B, Counter())
 
 # pygame setup
 
@@ -118,7 +126,9 @@ while running:
         if event.type == pygame.QUIT:
             running = False
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_ESCAPE]: running = False
+    if keys[pygame.K_ESCAPE]:
+        running = False
+    TowerOfHanoi(len(A.data), A, C, B, Counter())
 
 pygame.quit()
 
