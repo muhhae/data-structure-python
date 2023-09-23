@@ -1,14 +1,18 @@
 import pygame
-import sys
 
 pygame.init()
 
 displayList = pygame.display.get_desktop_sizes()
+res = [1366, 728]
 
-screen = pygame.display.set_mode(displayList[0])
+screen = pygame.display.set_mode(res)
 clock = pygame.time.Clock()
 running = True
 dt = 0
+
+restart = False
+diskCount = 10
+delay = 0
 
 pygame.display.flip()
 class Counter:
@@ -18,7 +22,6 @@ class Counter:
         self.value += value
     def reset(self):
         self.value = 0
-
 class Stack:
     def __init__(self, name = "Stack Default"):
         self.data = []
@@ -36,11 +39,24 @@ def KeyByName(stack: Stack):
         multiplier /= 10
     return value
 
-def TowerOfHanoi(n: int, source: Stack, destination: Stack, aux: Stack, counter: Counter):
+def initHanoi(count: int):
+    A = Stack("A")
+    B = Stack("B")
+    C = Stack("C")
+    for i in range(count, 0, -1):
+        A.push(i)
+    return [A, B, C]
+
+def TowerOfHanoi(n: int, source: Stack, destination: Stack, aux: Stack, delay: float = 1, counter: Counter = Counter()):
     if n == 0:
         return
 
-    TowerOfHanoi(n-1, source, aux, destination, counter)
+    TowerOfHanoi(n-1, source, aux, destination, delay, counter)
+
+    global running
+    global restart
+    if not running or restart:
+        return
 
     StackList = [source, destination, aux]
     StackList.sort(key=KeyByName)
@@ -61,7 +77,7 @@ def TowerOfHanoi(n: int, source: Stack, destination: Stack, aux: Stack, counter:
     pos = 350
     for i in range(3):
         x = pos - 50
-        y = 200
+        y = 100
         width = 20
         height = 600
 
@@ -72,7 +88,9 @@ def TowerOfHanoi(n: int, source: Stack, destination: Stack, aux: Stack, counter:
         diskHeight = height / count
         diskWidth = 400
 
-        yDisk = 800 - diskHeight
+        if diskHeight > 50: diskHeight = 50
+
+        yDisk = y + 600 - diskHeight
         xDisk = x
 
         color = ["red", "green", "blue"]
@@ -86,49 +104,65 @@ def TowerOfHanoi(n: int, source: Stack, destination: Stack, aux: Stack, counter:
             yDisk -= diskHeight
         pos += 400
     pygame.display.flip()
-    timeCount = 0
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_ESCAPE]:
-        pygame.quit()
-        sys.exit()
 
-    while timeCount < 0.3:
+    if keys[pygame.K_ESCAPE]:
+        running = False
+    if keys[pygame.K_r]:
+        restart = True
+
+    timeCount = 0
+    while timeCount < delay:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
         timeCount += clock.tick(60) / 1000
 
+        keys = pygame.key.get_pressed()
+
         if keys[pygame.K_SPACE]:
             timeCount = 2
         if keys[pygame.K_ESCAPE]:
-            pygame.quit()
+            running = False
+        if keys[pygame.K_r]:
+            restart = True
     # input()
-    TowerOfHanoi(n-1, aux, destination, source, counter)
+    TowerOfHanoi(n-1, aux, destination, source, delay, counter)
 
-A = Stack("A")
-B = Stack("B")
-C = Stack("C")
-
-for i in range(10, 0, -1):
-    A.push(i)
+Arr = initHanoi(diskCount)
 
 print("Initial Condition")
-print("A :", A.data)
-print("B :", B.data)
-print("C :", C.data, "\n")
+print("A :", Arr[0].data)
+print("B :", Arr[1].data)
+print("C :", Arr[2].data, "\n")
 
 # pygame setup
+restart = True
 
 while running:
+    if restart:
+        diskCount = int(input("Disk Count: "))
+        delay = float(input("delay: "))
+
+        Arr = initHanoi(diskCount)
+        restart = False
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
     keys = pygame.key.get_pressed()
+    if keys[pygame.K_r]:
+        pass
     if keys[pygame.K_ESCAPE]:
         running = False
-    TowerOfHanoi(len(A.data), A, C, B, Counter())
+    TowerOfHanoi(len(Arr[0].data), Arr[0], Arr[2], Arr[1], delay, Counter(),)
 
 pygame.quit()
+    
 
